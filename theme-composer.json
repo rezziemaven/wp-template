@@ -1,0 +1,17 @@
+{
+  "name": "350org/name-of-theme",
+  "description": "Change description here",
+  "version": "1.0.0",
+  "keywords": ["wordpress", "theme"],
+  "homepage": "https://github.com/350org/name-of-theme",
+  "authors": [
+    {
+      "name": "Author One",
+      "homepage": "https://authorone.com/"
+    }
+  ],
+  "type": "wordpress-theme",
+  "require": {
+    "php": ">=7.0"
+  }
+}

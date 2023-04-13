@@ -1,0 +1,17 @@
+{
+  "name": "350org/name-of-plugin",
+  "description": "Change description here",
+  "version": "1.0.0",
+  "keywords": ["wordpress", "plugin"],
+  "homepage": "https://github.com/350org/name-of-plugin",
+  "authors": [
+    {
+      "name": "Author One",
+      "homepage": "https://authorone.com/"
+    }
+  ],
+  "type": "wordpress-plugin",
+  "require": {
+    "php": ">=7.0"
+  }
+}
