@@ -11,6 +11,9 @@
     }
   ],
   "type": "wordpress-plugin",
+  "extra": {
+    "installer-name": "new-folder-name"
+  },
   "require": {
     "php": ">=7.0"
   }
