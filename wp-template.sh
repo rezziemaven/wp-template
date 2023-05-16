@@ -194,13 +194,13 @@ for arg in "$@"; do
   # First arg options
   if [ "$1" = "-mu" -o "$1" = "-p" -o "$1" = "-t" ] ; then
     # Add .gitignore if not in folder
-    if [ ! -e "`pwd`/.gitignore" ] ; then
+    if [ ! -f "`pwd`/.gitignore" ] ; then
       cp "$SCRIPTDIR/templates/.gitignore" ./.gitignore
       echo .gitignore added.
       filesAdded=$((filesAdded+1))
     fi
     # Add composer.json if not in folder
-    if [ ! -e "`pwd`/composer.json" ] ; then
+    if [ ! -f "`pwd`/composer.json" ] ; then
       if [ "$1" = "-mu" ]; then
         cp "$SCRIPTDIR/templates/mu-plugin-composer.json" ./composer.json
       elif [ "$1" = "-p" ]; then
@@ -213,13 +213,12 @@ for arg in "$@"; do
       fi
       echo Composer file added.
       filesAdded=$((filesAdded+1))
-      # Prompt for PHP file name containing plugin header
       if [ -z "$2" -o "$2" = "-a" -o "$2" = "-i" ]; then
-
         # Modify name and homepage in composer.json file
         [ -z "$3" ] && FOLDER="$(basename $PWD)" || FOLDER="$3"
         # Only copy folder name without -3p or -mu
         newFolderName="$(echo $FOLDER | sed 's/-[3m][pu]//')"
+        # Prompt for PHP file name containing plugin header
         PHPPrompt
         sed -i "" "s/name-of-$pluginOrTheme/$FOLDER/g" composer.json
         # Modify new path for plugin or theme in composer.json file
