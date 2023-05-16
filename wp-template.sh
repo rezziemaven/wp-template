@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=1.0.0
+VERSION=1.0.1
 ################################################################################
 #                              wp-template                                  #
 #                                                                              #
@@ -102,65 +102,48 @@ AddReadme()
 {
   local option=$1
   # Adds Readme to folder
-  # MakeReadme()
-  # {
-    if [ "$option" = "blank" ]; then
-      # add Blank Readme to folder
-      touch README.md
-      echo README created.
-      break
-    elif [ "$option" = "interactive" ]; then
-      echo "Add $pluginOrTheme name"
-      read readmeHeading
-      echo "# $readmeHeading" >> README.md
-      echo "Add $pluginOrTheme description"
-      read readmeDescription
-      echo -e "# $readmeHeading\n$readmeDescription" > README.md
-    else
-      # Store plugin name
-      pluginName="$(GetTrimmedStringFrom "Plugin Name")"
-      # Store description if variable doesn't already exist
-      [ -z "$description" ] && description="$(GetTrimmedStringFrom "Description")"
-      # Add plugin name and description to README.md
-      echo -e "# $pluginName\n$description" > README.md
-    fi
-      echo README created. Please check file to ensure contents are correct.
-      filesAdded=$((filesAdded+1))
-  # }
-  # Prompt() {
-  #   read -p "Do you want to add a README to the folder? (Y/N): " choice
-  #   case "$choice" in
-  #     y|Y)
-  #       MakeReadme
-  #       ;;
-  #     n|N)
-  #       break
-  #       ;;
-  #     *)
-  #       echo "Invalid choice. Try again."
-  #       Prompt
-  #       ;;
-  #   esac
-  # }
-  # if [ "$option" = "auto" ]; then
-  #   MakeReadme
-  # else
-  #   Prompt
-  # fi
-  # MakeReadme
+
+  if [ "$option" = "blank" ]; then
+    # add Blank Readme to folder
+    touch README.md
+    echo README created.
+    break
+  elif [ "$option" = "interactive" ]; then
+    echo "Add $pluginOrTheme name"
+    read readmeHeading
+    echo "# $readmeHeading" >> README.md
+    echo "Add $pluginOrTheme description"
+    read readmeDescription
+    echo -e "# $readmeHeading\n$readmeDescription" > README.md
+  else
+    # Store plugin name
+    pluginName="$(GetTrimmedStringFrom "Plugin Name")"
+    # Store description if variable doesn't already exist
+    [ -z "$description" ] && description="$(GetTrimmedStringFrom "Description")"
+    # Add plugin name and description to README.md
+    echo -e "# $pluginName\n$description" > README.md
+  fi
+  echo README created. Please check file to ensure contents are correct.
+  filesAdded=$((filesAdded+1))
 }
 
 PHPPrompt()
 {
   # Prompt for PHP file name containing plugin header
   # Track number of tries
-  local tries=0
-  local prompt="Name of PHP file containing plugin header"
+  local tries=1
+  local prompt="Name of PHP file containing plugin header [press Enter to accept default: ${newFolderName}]"
+  # local newFolderName=$1
   Prompt()
   {
     if [ $tries -lt 4 ]; then
-      [ $tries -eq 0 ] && echo "$prompt" || echo "[$tries/3] $prompt"
+      [ $tries -eq 1 ] && echo "$prompt" || echo "[$tries/3] $prompt"
       read pluginFilename
+      # Use folder name (without suffix) if no name was entered
+      if [ -z "$pluginFilename"]; then
+        pluginFilename=$newFolderName
+        echo "plugin filename is $pluginFilename"
+      fi
       # Add .php if not included
       [[ ! $pluginFilename =~ ".php" ]] && pluginFilename="$pluginFilename.php"
       if [ -f "$pluginFilename" ]; then
@@ -173,6 +156,7 @@ PHPPrompt()
       fi
     else
       echo Invalid filename. Exiting.
+      rm ./composer.json
       exit
     fi
   }
@@ -198,30 +182,32 @@ Error()
 
 pluginOrTheme=plugin
 filesAdded=0
+SCRIPTPATH=$(greadlink -f `which wp-template`)
+SCRIPTDIR=$(dirname $SCRIPTPATH)
+echo $(pwd)
 # Show Help if no arguments were added.
 if [ "$#" -eq 0 ]; then
   Help
   exit
 fi
 for arg in "$@"; do
-  echo $@
   # First arg options
   if [ "$1" = "-mu" -o "$1" = "-p" -o "$1" = "-t" ] ; then
     # Add .gitignore if not in folder
-    if [ ! -f ".gitignore" ] ; then
-      cp ~/code/350org/wordpress/file-templates/.gitignore ./.gitignore
+    if [ ! -e "`pwd`/.gitignore" ] ; then
+      cp "$SCRIPTDIR/templates/.gitignore" ./.gitignore
       echo .gitignore added.
       filesAdded=$((filesAdded+1))
     fi
     # Add composer.json if not in folder
-    if [ ! -f "composer.json" ] ; then
+    if [ ! -e "`pwd`/composer.json" ] ; then
       if [ "$1" = "-mu" ]; then
-        cp ~/code/350org/wordpress/file-templates/mu-plugin-composer.json ./composer.json
+        cp "$SCRIPTDIR/templates/mu-plugin-composer.json" ./composer.json
       elif [ "$1" = "-p" ]; then
-        cp ~/code/350org/wordpress/file-templates/plugin-composer.json ./composer.json
+        cp "$SCRIPTDIR/templates/plugin-composer.json" ./composer.json
       elif [ "$1" = "-t" ]; then
         $pluginOrTheme=theme
-        cp ~/code/350org/wordpress/file-templates/theme-composer.json ./composer.json
+        cp "$SCRIPTDIR/templates/theme-composer.json" ./composer.json
       elif [ -z "$1" ]; then
         break
       fi
@@ -229,20 +215,21 @@ for arg in "$@"; do
       filesAdded=$((filesAdded+1))
       # Prompt for PHP file name containing plugin header
       if [ -z "$2" -o "$2" = "-a" -o "$2" = "-i" ]; then
-        PHPPrompt
+
         # Modify name and homepage in composer.json file
         [ -z "$3" ] && FOLDER="$(basename $PWD)" || FOLDER="$3"
+        # Only copy folder name without -3p or -mu
+        newFolderName="$(echo $FOLDER | sed 's/-[3m][pu]//')"
+        PHPPrompt
         sed -i "" "s/name-of-$pluginOrTheme/$FOLDER/g" composer.json
+        # Modify new path for plugin or theme in composer.json file
+        sed -i "" "s/new-folder-name/$newFolderName/" composer.json
         case "$2" in
           -a|"")
             AutomaticMode
-            # echo Composer file updated. Please check file to ensure contents are correct.
-            # ReadmePrompt
             ;;
           -i)
             InteractiveMode $pluginOrTheme
-            # echo Composer file updated. Please check file to ensure contents are correct.
-            # ReadmePrompt "interactive"
             ;;
         esac
         echo Composer file updated. Please check file to ensure contents are correct.
